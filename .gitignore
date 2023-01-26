@@ -1,0 +1,7 @@
+/.env.db
+/.env
+/celerybeat-schedule.db
+/app/celerybeat-schedule.db
+/app/db.sqlite3
+.idea
+/app/celerybeat-schedule
