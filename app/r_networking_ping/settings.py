@@ -16,22 +16,22 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", default='django-insecure--)kjn=ff*(l-zh8@685($2vyjn=7w_!%7#dg8htarjctf*692^')
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY",
+                            default='django-insecure--)kjn=ff*(l-zh8@685($2vyjn=7w_!%7#dg8htarjctf*692^')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DJANGO_DEBUG", default=True)
 
+CORS_ORIGIN_ALLOW_ALL = True
 
 ALLOWED_HOSTS = []
 ALLOWED_HOSTS_ENV = os.getenv('DJANGO_ALLOWED_HOSTS')
 if ALLOWED_HOSTS_ENV:
     ALLOWED_HOSTS = ALLOWED_HOSTS_ENV.split(',')
-
 
 # Application definition
 
@@ -54,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'r_networking_ping.urls'
@@ -77,7 +78,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'r_networking_ping.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
@@ -91,7 +91,6 @@ DATABASES = {
         "PORT": os.environ.get("SQL_PORT", "5432"),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -111,7 +110,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
@@ -122,7 +120,6 @@ TIME_ZONE = os.getenv('DJANGO_TIME_ZONE', 'UTC')
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
@@ -139,7 +136,7 @@ CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", default="redis://localho
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", default="redis://localhost:6379")
 
 CELERY_BEAT_SCHEDULE = {
-      'add-every-30-seconds': {
+    'add-every-30-seconds': {
         'task': 'reachability.tasks.poll',
         'schedule': 30.0,
         'options': {
