@@ -14,26 +14,30 @@ This project was conceived from a Reddit post asking for a tool that can ping mu
 # Clone repo
 git clone urlHere
 
-# Set up python environment
-python -m venv venv
-source ./venv/bin/activate
-pip install -r requirments.txt
+# Set up python environment (Poetry)
+poetry install
 
-# Migrate database - this will create a temp sqlite3 db
-python manage.py makemigrations
-python manage.py migrate
+# Migrate database - this will create a temp sqlite3 db (run from app/)
+cd app
+poetry run python manage.py makemigrations
+poetry run python manage.py migrate
 
-# Start Celery Worker
-python -m celery -A r_networking_ping  worker # you may need to run this as sudo
-python -m celery -A r_networking_ping  beat
-python -m celery -A r_networking_ping  flower
+# Start Celery Worker (from app/)
+poetry run python -m celery -A r_networking_ping worker  # you may need to run this as sudo
+poetry run python -m celery -A r_networking_ping beat
+poetry run python -m celery -A r_networking_ping flower
 
 # set environment
 set -o allexport; source .env; set +o allexport
 
-# Start Development Server
-python manage.py runserver
+# Start Development Server (from app/)
+poetry run python manage.py runserver
+```
 
+## Regenerating requirements.txt (e.g. for Docker)
+If you use Docker and need `app/requirements.txt` in sync with Poetry:
+```shell
+poetry export -f requirements.txt --without-hashes -o app/requirements.txt
 ```
 
 # Deployment
