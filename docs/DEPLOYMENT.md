@@ -21,8 +21,10 @@ Services:
 ## Routing (Traefik)
 The `web` router accepts:
 1. Hostname requests matching `TRAEFIK_HOST`.
-2. Direct IP requests (IPv4 host headers).
+2. RFC1918 IPv4 host headers (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`).
 3. Direct IP requests (bracketed IPv6 host headers).
+
+`DJANGO_ALLOWED_HOSTS` must still include any hostnames/IPs you expect Django to serve.
 
 ## Required Environment
 Set before starting production:

@@ -98,8 +98,14 @@ services:
       - internal
     labels:
       traefik.enable: "true"
-      traefik.http.routers.reachability.rule: "Host(`${TRAEFIK_HOST:-localhost}`) || HeaderRegexp(`Host`, `^([0-9]{1,3}\\.){3}[0-9]{1,3}(:[0-9]{1,5})?$`) || HeaderRegexp(`Host`, `^\\[[0-9a-fA-F:]+\\](:[0-9]{1,5})?$`)"
-      traefik.http.routers.reachability.entrypoints: "web"
+      traefik.http.routers.reachability-host.rule: "Host(`${TRAEFIK_HOST:-localhost}`)"
+      traefik.http.routers.reachability-host.entrypoints: "web"
+      traefik.http.routers.reachability-host.service: "reachability"
+      traefik.http.routers.reachability-host.priority: "100"
+      traefik.http.routers.reachability-ip.rule: "HostRegexp(`^(10\\.(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})\\.(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})\\.(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})|172\\.(1[6-9]|2[0-9]|3[0-1])\\.(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})\\.(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})|192\\.168\\.(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})\\.(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2}))$`) || HostRegexp(`^\\[[0-9a-fA-F:]+\\]$`)"
+      traefik.http.routers.reachability-ip.entrypoints: "web"
+      traefik.http.routers.reachability-ip.service: "reachability"
+      traefik.http.routers.reachability-ip.priority: "90"
       traefik.http.services.reachability.loadbalancer.server.port: "8000"
     restart: unless-stopped
     mem_limit: 1024m
