@@ -1,4 +1,4 @@
-FROM python:3.10-buster AS builder
+FROM python:3.12-slim-bookworm AS builder
 LABEL maintainer="Jermaine Bhoorasingh <r_networking_ping@jermaine.co>"
 
 # set work directory
@@ -8,9 +8,13 @@ WORKDIR /usr/src/app
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# install psycopg2 dependencies
+# install system dependencies
 RUN apt-get update \
-    && apt-get install -y postgresql-server-dev-all gcc python3-dev musl-dev
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        libpq-dev \
+        traceroute \
+    && rm -rf /var/lib/apt/lists/*
 # install dependencies
 RUN pip install --upgrade pip
 COPY ./requirements.txt .
