@@ -70,10 +70,7 @@ export TRAEFIK_HOST=ping.example.com
 export DJANGO_ALLOWED_HOSTS=ping.example.com
 export WEB_REPLICAS=3
 
-# migrate once
-docker compose -f docker-compose.prod.yml --profile ops run --rm migrate
-
-# start stack with replicas
+# start stack with replicas (runs migrations first via migrate service)
 docker compose -f docker-compose.prod.yml up -d --build --scale web=${WEB_REPLICAS:-3}
 ```
 

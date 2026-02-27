@@ -1,6 +1,6 @@
 services:
   traefik:
-    image: traefik:v3.1
+    image: traefik:v3
     command:
       - --api.dashboard=true
       - --api.insecure=true
@@ -89,6 +89,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     expose:
       - "8000"
     networks:
@@ -136,6 +138,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     networks:
       - internal
     restart: unless-stopped
@@ -148,7 +152,7 @@ services:
   beat:
     build:
       context: ./app
-    command: python -m r_networking_ping.celery_compat -A r_networking_ping beat --loglevel=info
+    command: python -m r_networking_ping.celery_compat -A r_networking_ping beat --loglevel=info --schedule=/tmp/celerybeat-schedule
     working_dir: /usr/src/app
     env_file:
       - ./app/.env
@@ -167,6 +171,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     networks:
       - internal
     restart: unless-stopped
@@ -199,8 +205,6 @@ services:
         condition: service_healthy
     networks:
       - internal
-    profiles:
-      - ops
     restart: "no"
 
 volumes:

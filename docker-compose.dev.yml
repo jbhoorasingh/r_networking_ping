@@ -88,7 +88,7 @@ services:
   beat:
     build:
       context: ./app
-    command: python -m r_networking_ping.celery_compat -A r_networking_ping beat --loglevel=info
+    command: python -m r_networking_ping.celery_compat -A r_networking_ping beat --loglevel=info --schedule=/tmp/celerybeat-schedule
     working_dir: /usr/src/app
     volumes:
       - ./app:/usr/src/app

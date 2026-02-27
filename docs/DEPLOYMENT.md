@@ -37,15 +37,11 @@ Keep these files populated:
 2. `.db.env`
 
 ## Start Production
-Run migrations once:
-```bash
-docker compose -f docker-compose.prod.yml --profile ops run --rm migrate
-```
-
 Start services:
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build --scale web=${WEB_REPLICAS:-3}
 ```
+The stack runs migrations automatically through the `migrate` service before `web`, `worker`, and `beat` start.
 
 ## Scaling
 Scale Django app containers:
