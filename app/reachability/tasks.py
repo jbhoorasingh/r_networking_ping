@@ -75,15 +75,14 @@ def _run_traceroute(host, privileged_ping):
     try:
         trace_hops = traceroute(host.ip_address, timeout=2, privileged=trace_privileged)
         return True, _format_trace_output(trace_hops)
-    except exceptions.SocketPermissionError as exc:
+    except Exception as exc:
         if fallback_enabled:
             logger.info(
-                "icmplib traceroute needs elevated privileges for host=%s; using system traceroute fallback",
+                "icmplib traceroute failed for host=%s (%s); using system traceroute fallback",
                 host.id,
+                exc.__class__.__name__,
             )
             return _run_system_traceroute(host.ip_address)
-        return True, f"Traceroute failed: {exc}"
-    except Exception as exc:
         return True, f"Traceroute failed: {exc}"
 
 

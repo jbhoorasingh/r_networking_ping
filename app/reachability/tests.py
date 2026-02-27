@@ -210,6 +210,28 @@ class ReachabilityTaskTests(TestCase):
         self.assertIn("traceroute to 10.0.0.13", output)
         run_mock.assert_called_once()
 
+    def test_run_traceroute_uses_system_fallback_on_icmplib_type_error(self):
+        host = Host.objects.create(hostname="router-k", ip_address="10.0.0.14", active=True)
+        completed = SimpleNamespace(
+            stdout="traceroute to 10.0.0.14\n1 10.0.0.1 1.20 ms",
+            stderr="",
+            returncode=0,
+        )
+
+        with patch(
+            "reachability.tasks.traceroute",
+            side_effect=TypeError(
+                "ICMPRequest.__init__() got an unexpected keyword argument 'privileged'"
+            ),
+        ):
+            with patch("reachability.tasks.shutil.which", return_value="/usr/sbin/traceroute"):
+                with patch("reachability.tasks.subprocess.run", return_value=completed) as run_mock:
+                    attempted, output = _run_traceroute(host, privileged_ping=False)
+
+        self.assertTrue(attempted)
+        self.assertIn("traceroute to 10.0.0.14", output)
+        run_mock.assert_called_once()
+
     def test_poll_enqueues_ping_host_when_async_enabled(self):
         host = Host.objects.create(hostname="router-f", ip_address="10.0.0.9", active=True)
 
