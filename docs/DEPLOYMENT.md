@@ -7,32 +7,36 @@ This document covers Docker deployment for:
 ## Files
 1. `docker-compose.yml`: development stack.
 2. `docker-compose.dev.yml`: same as development stack.
-3. `docker-compose.prod.yml`: production stack with Traefik, replicas, and memory limits.
+3. `docker-compose.prod.yml`: production stack with Nginx, replicas, and memory limits.
+4. `nginx/prod.conf`: Nginx reverse proxy configuration for production.
 
 ## Production Architecture
 Services:
-1. `traefik`: reverse proxy/load balancer on port `80` (dashboard on `8080`).
+1. `nginx`: reverse proxy/load balancer on port `80`.
 2. `web`: Django + Gunicorn (multiple replicas supported).
 3. `worker`: Celery worker.
 4. `beat`: Celery beat scheduler.
 5. `db`: PostgreSQL.
 6. `redis`: Redis broker/backend.
+7. `migrate`: one-off migration job before app workers start.
 
-## Routing (Traefik)
-The `web` router accepts:
-1. Hostname requests matching `TRAEFIK_HOST`.
-2. RFC1918 IPv4 host headers (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`).
-3. Direct IP requests (bracketed IPv6 host headers).
+## Networking and Routing
+1. All services run on one shared Docker network: `app`.
+2. `nginx` proxies incoming requests to `web:8000`.
+3. `worker` and `beat` keep outbound network access through normal Docker bridge egress.
 
-`DJANGO_ALLOWED_HOSTS` must still include any hostnames/IPs you expect Django to serve.
+`DJANGO_ALLOWED_HOSTS` must include hostnames/IPs you expect Django to serve.
 
 ## Required Environment
 Set before starting production:
 ```bash
-export TRAEFIK_HOST=ping.example.com
-export DJANGO_ALLOWED_HOSTS=ping.example.com
 export WEB_REPLICAS=3
 ```
+Optional hardening:
+```bash
+export DJANGO_ALLOWED_HOSTS=ping.example.com,10.0.0.10,192.168.1.25
+```
+If not set, production compose defaults to `DJANGO_ALLOWED_HOSTS=*`.
 
 Keep these files populated:
 1. `app/.env`
@@ -64,4 +68,3 @@ docker stack deploy -c docker-compose.prod.yml r-networking-ping
 ## Notes
 1. `web` runs `collectstatic` before starting Gunicorn.
 2. Static files are served by WhiteNoise inside Django.
-3. Traefik dashboard (`:8080`) is enabled with insecure mode for convenience; disable before internet exposure.

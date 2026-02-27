@@ -66,19 +66,24 @@ Docs index: [docs/README.md](docs/README.md).
 Quick start:
 ```bash
 # required runtime env values
-export TRAEFIK_HOST=ping.example.com
-export DJANGO_ALLOWED_HOSTS=ping.example.com
 export WEB_REPLICAS=3
 
 # start stack with replicas (runs migrations first via migrate service)
 docker compose -f docker-compose.prod.yml up -d --build --scale web=${WEB_REPLICAS:-3}
 ```
 
+Optional hardening:
+```bash
+export DJANGO_ALLOWED_HOSTS=ping.example.com,10.0.0.10,192.168.1.25
+```
+If not set, production compose defaults to `DJANGO_ALLOWED_HOSTS=*`.
+
 Production stack includes:
-1. Traefik load balancing in front of Django/Gunicorn.
-2. Hostname and direct IP routing to Django.
+1. Nginx load balancing in front of Django/Gunicorn.
+2. One shared Docker network for all prod services.
 3. Web service replicas.
 4. Memory limits for core services.
+5. Outbound ping/traceroute support from worker containers.
 
 ## Environment Variables
 App env (`app/.env`) example:
