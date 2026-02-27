@@ -1,11 +1,7 @@
-
-
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from rest_framework.views import APIView
-from django.http import HttpResponse
 from rest_framework.response import Response
-from rest_framework import status, permissions
-from rest_framework.parsers import JSONParser
+from rest_framework import status
 from .models import Host, Test
 from .serializers import HostSerializer, TestSerializer
 
@@ -38,7 +34,6 @@ class ViewHostDetail(APIView):
             host = Host.objects.get(pk=id)
         except Host.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        print(host.lastest_test)
         serializer = HostSerializer(host)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -65,12 +60,51 @@ class ViewHostDetail(APIView):
         host.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 class ViewListHostTests(APIView):
     """View all Test for a specific Host."""
     serializer_class = TestSerializer
 
     def get(self, request, id):
-        tests = Test.objects.filter(host_id=id).order_by("-timestamp").all()
+        tests = Test.objects.filter(host_id=id).order_by("-timestamp")
+        limit_value = request.query_params.get("limit")
+        if limit_value:
+            try:
+                limit = int(limit_value)
+                if limit > 0:
+                    tests = tests[: min(limit, 200)]
+            except ValueError:
+                pass
         serializer = TestSerializer(tests, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+class ViewListTests(APIView):
+    """View all tests across all hosts."""
+    serializer_class = TestSerializer
+
+    def get(self, request):
+        tests = Test.objects.select_related("host").order_by("-timestamp").all()
+        serializer = TestSerializer(tests, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+def hosts_page(request):
+    return render(request, "hosts.html", {"active_page": "hosts"})
+
+
+def results_page(request):
+    return render(request, "results.html", {"active_page": "results"})
+
+
+def host_detail_page(request, id):
+    host = get_object_or_404(Host, pk=id)
+    return render(
+        request,
+        "host_detail.html",
+        {
+            "active_page": "hosts",
+            "host_id": host.id,
+            "host_name": host.hostname,
+        },
+    )

@@ -15,8 +15,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from reachability.views import host_detail_page, hosts_page, results_page
 
 urlpatterns = [
+    path('', hosts_page, name='hosts_page'),
+    path('results/', results_page, name='results_page'),
+    path('host/<int:id>/', host_detail_page, name='host_detail_page'),
     path('admin/', admin.site.urls),
-    path('api/host/', include('reachability.urls')),
+    path('api/', include('reachability.urls')),
 ]

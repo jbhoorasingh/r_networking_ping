@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ host_name }}{% endblock %}
+
+{% block content %}
+<section id="host-detail-root" class="panel panel-tests" data-host-id="{{ host_id }}">
+    <div class="panel-header">
+        <h2 id="host-title">Host Details</h2>
+        <div class="page-actions">
+            <span class="meta" id="host-summary">Loading host...</span>
+            <a class="inline-link" href="/results/">All test results</a>
+        </div>
+    </div>
+
+    <div class="card host-summary-card">
+        <div id="host-meta-grid" class="host-meta-grid">
+            <div class="metric">
+                <span class="metric-label">Hostname</span>
+                <strong class="metric-value" id="metric-hostname">-</strong>
+            </div>
+            <div class="metric">
+                <span class="metric-label">IP Address</span>
+                <strong class="metric-value" id="metric-ip">-</strong>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Status</span>
+                <strong class="metric-value" id="metric-status">-</strong>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Latest Avg RTT</span>
+                <strong class="metric-value" id="metric-rtt">-</strong>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Trace Mode</span>
+                <strong class="metric-value" id="metric-trace-mode">-</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="card sparkline-card">
+        <div class="panel-header">
+            <h3>Latency Trend</h3>
+            <span class="meta">Latest 20 pings</span>
+        </div>
+        <div id="host-sparkline" class="detail-sparkline">
+            Loading trend...
+        </div>
+    </div>
+
+    <div class="card table-card">
+        <div id="host-test-errors" class="alert hidden"></div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Status</th>
+                        <th>Avg RTT</th>
+                        <th>Min RTT</th>
+                        <th>Max RTT</th>
+                        <th>Packet Loss</th>
+                        <th>Sent</th>
+                        <th>Received</th>
+                        <th>Trace</th>
+                    </tr>
+                </thead>
+                <tbody id="host-tests-table-body">
+                    <tr>
+                        <td colspan="9" class="placeholder-row">Loading host tests...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/host-detail.js' %}" defer></script>
+{% endblock %}

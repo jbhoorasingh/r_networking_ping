@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}All Results{% endblock %}
+
+{% block content %}
+<section class="panel panel-tests">
+    <div class="panel-header">
+        <h2>All Test Results</h2>
+        <span class="meta">Auto-refresh every 30s</span>
+    </div>
+    <div class="card table-card">
+        <div id="test-errors" class="alert hidden"></div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Hostname</th>
+                        <th>IP Address</th>
+                        <th>Status</th>
+                        <th>Avg RTT</th>
+                        <th>Min RTT</th>
+                        <th>Max RTT</th>
+                        <th>Packet Loss</th>
+                        <th>Sent</th>
+                        <th>Received</th>
+                        <th>Trace</th>
+                    </tr>
+                </thead>
+                <tbody id="tests-table-body">
+                    <tr>
+                        <td colspan="11" class="placeholder-row">Loading test results...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/results.js' %}" defer></script>
+{% endblock %}

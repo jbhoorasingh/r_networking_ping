@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Hosts{% endblock %}
+
+{% block content %}
+<section class="panel panel-hosts">
+    <div class="panel-header">
+        <h2>Hosts</h2>
+        <div class="page-actions">
+            <span class="meta" id="host-count">0 hosts</span>
+            <a class="inline-link" href="/results/">View all test results</a>
+        </div>
+    </div>
+    <div class="panel-layout">
+        <form id="add-host-form" class="card form-card">
+            {% csrf_token %}
+            <h3>Add Host</h3>
+            <label for="add-hostname">Hostname</label>
+            <input id="add-hostname" name="hostname" type="text" maxlength="50" required>
+            <label for="add-ip-address">IP Address</label>
+            <input id="add-ip-address" name="ip_address" type="text" maxlength="50" required>
+            <label class="checkbox-field" for="add-active">
+                <input id="add-active" name="active" type="checkbox" checked>
+                <span>Active</span>
+            </label>
+            <label for="add-trace-mode">Trace Mode</label>
+            <select id="add-trace-mode" name="trace_mode">
+                <option value="on_fail" selected>Only on ping failure</option>
+                <option value="always">Every poll</option>
+            </select>
+            <button type="submit">Create Host</button>
+            <p class="form-message" id="add-form-message"></p>
+        </form>
+        <div class="card table-card">
+            <div id="host-errors" class="alert hidden"></div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Hostname</th>
+                            <th>IP Address</th>
+                            <th>Status</th>
+                            <th>Avg RTT</th>
+                            <th>Trend</th>
+                            <th>Active</th>
+                            <th>Trace Mode</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hosts-table-body">
+                        <tr>
+                            <td colspan="9" class="placeholder-row">Loading hosts...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div id="edit-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+    <div class="modal-backdrop" data-close-modal="true"></div>
+    <div class="modal-content">
+        <h3 id="edit-modal-title">Edit Host</h3>
+        <form id="edit-host-form">
+            {% csrf_token %}
+            <input type="hidden" id="edit-host-id" name="id">
+            <label for="edit-hostname">Hostname</label>
+            <input id="edit-hostname" name="hostname" type="text" maxlength="50" required>
+            <label for="edit-ip-address">IP Address</label>
+            <input id="edit-ip-address" name="ip_address" type="text" maxlength="50" required>
+            <label class="checkbox-field" for="edit-active">
+                <input id="edit-active" name="active" type="checkbox">
+                <span>Active</span>
+            </label>
+            <label for="edit-trace-mode">Trace Mode</label>
+            <select id="edit-trace-mode" name="trace_mode">
+                <option value="on_fail">Only on ping failure</option>
+                <option value="always">Every poll</option>
+            </select>
+            <p class="form-message" id="edit-form-message"></p>
+            <div class="modal-actions">
+                <button type="button" class="ghost-btn" id="cancel-edit-btn">Cancel</button>
+                <button type="submit">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/hosts.js' %}" defer></script>
+{% endblock %}

@@ -8,3 +8,6 @@
 
 # Poetry
 .venv/
+
+# Debug (agent)
+app/debug_run.log

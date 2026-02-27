@@ -1,0 +1,212 @@
+services:
+  traefik:
+    image: traefik:v3.1
+    command:
+      - --api.dashboard=true
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --accesslog=true
+      - --log.level=INFO
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - edge
+    restart: unless-stopped
+    mem_limit: 256m
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  db:
+    image: postgres:16-alpine
+    env_file:
+      - ./.db.env
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-r_networking_ping} -d ${POSTGRES_DB:-r_networking_ping}"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    networks:
+      - internal
+    restart: unless-stopped
+    mem_limit: 1024m
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --save 60 1 --loglevel warning
+    volumes:
+      - redis_prod_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    networks:
+      - internal
+    restart: unless-stopped
+    mem_limit: 512m
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  web:
+    build:
+      context: ./app
+    command:
+      - /bin/sh
+      - -c
+      - python manage.py collectstatic --noinput && gunicorn r_networking_ping.wsgi:application --bind 0.0.0.0:8000 --workers ${GUNICORN_WORKERS:-3} --threads ${GUNICORN_THREADS:-4} --timeout ${GUNICORN_TIMEOUT:-60}
+    working_dir: /usr/src/app
+    env_file:
+      - ./app/.env
+      - ./.db.env
+    environment:
+      DJANGO_DEBUG: "false"
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      SQL_ENGINE: django.db.backends.postgresql
+      SQL_HOST: db
+      SQL_PORT: "5432"
+      SQL_DATABASE: ${POSTGRES_DB:-r_networking_ping}
+      SQL_USER: ${POSTGRES_USER:-r_networking_ping}
+      SQL_PASSWORD: ${POSTGRES_PASSWORD:-HelloW0rld2023!}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - "8000"
+    networks:
+      - edge
+      - internal
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.reachability.rule: "Host(`${TRAEFIK_HOST:-localhost}`) || HeaderRegexp(`Host`, `^([0-9]{1,3}\\.){3}[0-9]{1,3}(:[0-9]{1,5})?$`) || HeaderRegexp(`Host`, `^\\[[0-9a-fA-F:]+\\](:[0-9]{1,5})?$`)"
+      traefik.http.routers.reachability.entrypoints: "web"
+      traefik.http.services.reachability.loadbalancer.server.port: "8000"
+    restart: unless-stopped
+    mem_limit: 1024m
+    deploy:
+      replicas: ${WEB_REPLICAS:-3}
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 10s
+      rollback_config:
+        order: stop-first
+      resources:
+        limits:
+          memory: 1024M
+
+  worker:
+    build:
+      context: ./app
+    command: python -m r_networking_ping.celery_compat -A r_networking_ping worker --loglevel=info --concurrency=${CELERY_WORKER_CONCURRENCY:-4}
+    working_dir: /usr/src/app
+    env_file:
+      - ./app/.env
+      - ./.db.env
+    environment:
+      SQL_ENGINE: django.db.backends.postgresql
+      SQL_HOST: db
+      SQL_PORT: "5432"
+      SQL_DATABASE: ${POSTGRES_DB:-r_networking_ping}
+      SQL_USER: ${POSTGRES_USER:-r_networking_ping}
+      SQL_PASSWORD: ${POSTGRES_PASSWORD:-HelloW0rld2023!}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      PING_DISPATCH_ASYNC: ${PING_DISPATCH_ASYNC:-false}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - internal
+    restart: unless-stopped
+    mem_limit: 1024m
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+
+  beat:
+    build:
+      context: ./app
+    command: python -m r_networking_ping.celery_compat -A r_networking_ping beat --loglevel=info
+    working_dir: /usr/src/app
+    env_file:
+      - ./app/.env
+      - ./.db.env
+    environment:
+      SQL_ENGINE: django.db.backends.postgresql
+      SQL_HOST: db
+      SQL_PORT: "5432"
+      SQL_DATABASE: ${POSTGRES_DB:-r_networking_ping}
+      SQL_USER: ${POSTGRES_USER:-r_networking_ping}
+      SQL_PASSWORD: ${POSTGRES_PASSWORD:-HelloW0rld2023!}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - internal
+    restart: unless-stopped
+    mem_limit: 384m
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+
+  migrate:
+    build:
+      context: ./app
+    command: python manage.py migrate --noinput
+    working_dir: /usr/src/app
+    env_file:
+      - ./app/.env
+      - ./.db.env
+    environment:
+      DJANGO_DEBUG: "false"
+      SQL_ENGINE: django.db.backends.postgresql
+      SQL_HOST: db
+      SQL_PORT: "5432"
+      SQL_DATABASE: ${POSTGRES_DB:-r_networking_ping}
+      SQL_USER: ${POSTGRES_USER:-r_networking_ping}
+      SQL_PASSWORD: ${POSTGRES_PASSWORD:-HelloW0rld2023!}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - internal
+    profiles:
+      - ops
+    restart: "no"
+
+volumes:
+  postgres_prod_data:
+  redis_prod_data:
+
+networks:
+  edge:
+  internal:
